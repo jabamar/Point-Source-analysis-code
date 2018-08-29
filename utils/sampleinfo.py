@@ -12,6 +12,19 @@ from KDEBoundaries1D import KernelDensityBoundaries1D
 
 
 def rotate_angle(local_coord=[0, 0], source_loc=[np.pi, 0]):
+    """
+    Calculate the equatorial coordinates of an event given the distance
+     to the source, the angle, and the source location.
+
+     Parameters
+     ----------
+
+     local_coord: list of 2 floats
+     [distance, angle] of the event to the source
+
+     source_loc: list of 2 floats
+     [ra, decl] of the source
+    """
 
     dist_local, ang_local = local_coord
     ra_source, decl_source = source_loc
@@ -75,7 +88,7 @@ class SampleProperties:
 
     """
 
-    def __init__(self, dictoptions):
+    def __init__(self, dictoptions=None):
         """ Class initialization
 
         Parameters
@@ -85,6 +98,10 @@ class SampleProperties:
             Dictionary with all the required inputs to initialise the class
 
         """
+
+        if dictoptions is None:
+            raise RuntimeError("Dictionary with SampleProperties info"
+                               "not loaded")
 
         self.samplename = dictoptions["samplename"]
         self.sigmaPSF = dictoptions["sigmaPSF"]
