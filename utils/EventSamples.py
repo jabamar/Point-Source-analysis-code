@@ -21,9 +21,11 @@ class EventSample:
     DataFrame with the events
     """
 
-    def __init__(self, sampleinfo=SampleProperties()):
+    def __init__(self, sampleinfo=None):
+#        if sampleinfo is not SampleProperties:
+#            raise RuntimeError("sampleinfo must be a SampleProperties object!")
         self.sampleinfo = sampleinfo
-        self.df_events = pd.Dataframe()
+        self.df_events = pd.DataFrame()
 
     def generate_events(self, Nsignal=0, signalpos=[180, -40]):
         """
@@ -65,7 +67,7 @@ class EventSample:
         RA_galplane = eq_array.ra.degree - 180
         Dec_galplane = eq_array.dec.degree
 
-        RA_evts = np.pi - self.df_events["RA_EVT"]
+        RA_evts = self.df_events["RA_EVT"] + np.pi
         Dec_evts = self.df_events["DECL_EVT"]
 
         plt.figure(figsize=(16, 10))
@@ -90,3 +92,6 @@ class EventSample:
                     color="#0368ff", coord='E', lonlat=True, markersize=2)
 
         plt.show()
+
+    def ClearSample(self):
+        self.df_events = None
