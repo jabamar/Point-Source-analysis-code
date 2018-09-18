@@ -10,8 +10,7 @@ import math
 # import matplotlib.pyplot as plt
 from KDEBoundaries1D import KernelDensityBoundaries1D
 
-
-def rotate_angle(local_coord=[0, 0], source_loc=[np.pi, 0]):
+def rotate_angle(local_coord=np.array([0, 0]), source_loc=np.array([math.pi, 0])):
     """
     Calculate the equatorial coordinates of an event given the distance
      to the source, the angle, and the source location.
@@ -29,7 +28,7 @@ def rotate_angle(local_coord=[0, 0], source_loc=[np.pi, 0]):
     dist_local, ang_local = local_coord
     ra_source, decl_source = source_loc
 
-    theta = np.pi/2 - decl_source
+    theta = math.pi/2 - decl_source
     phi = ra_source
     psi = 0
 
@@ -56,8 +55,10 @@ def rotate_angle(local_coord=[0, 0], source_loc=[np.pi, 0]):
                     + vector_local[1]*sintheta*cospsi
                     + vector_local[2]*costheta]
 
-    decl_evt = np.pi/2 - math.acos(vector_final[2])
+    decl_evt = math.pi/2 - math.acos(vector_final[2])
     ra_evt = math.atan2(vector_final[1], vector_final[0])
+    if ra_evt < 0 :
+        ra_evt = 2*math.pi + ra_evt
 
     return decl_evt, ra_evt
 
@@ -100,8 +101,8 @@ class SampleProperties:
         """
 
         if dictoptions is None:
-            raise RuntimeError("Dictionary with SampleProperties info"
-                               "not loaded")
+            raise IOError("Dictionary with SampleProperties info"
+                          "not loaded")
 
         self.samplename = dictoptions["samplename"]
         self.sigmaPSF = dictoptions["sigmaPSF"]
@@ -185,9 +186,7 @@ class SampleProperties:
 
         # distance_to_source contains all event distances from real source
         distance_to_source = np.concatenate([distance_to_source, badly_reco])
-
-        angle_from_source = np.abs(np.arcsin(np.random.uniform(0, 1,
-                                                               size=Nsignal)))
+        angle_from_source = np.random.uniform(0, 2*np.pi, size=Nsignal)
 
         signalpos = np.radians(signalposdeg)
 
@@ -195,10 +194,19 @@ class SampleProperties:
         decl_signal_evts = []
 
         for dist, angle in zip(distance_to_source, angle_from_source):
-            decl_evt, ra_evt = rotate_angle(local_coord=[dist, angle],
+            decl_evt, ra_evt = rotate_angle(local_coord=np.array([dist, angle]),
                                             source_loc=signalpos)
+
+            while(self.bgrate.score_samples(math.sin(decl_evt)) <= 1e-10):
+                newangle = np.random.uniform(0, 2*np.pi)
+                decl_evt, ra_evt = rotate_angle(local_coord=np.array([dist, newangle]),
+                                                source_loc=signalpos)
 
             ra_signal_evts.append(ra_evt)
             decl_signal_evts.append(decl_evt)
 
         return ra_signal_evts, decl_signal_evts
+
+    def signalPSF(self, dist):
+        sigmarad = np.deg2rad(self.sigmaPSF)
+        return np.exp(-dist*dist/(2*sigmarad*sigmarad))/(np.pi*2*(sigmarad**2))
